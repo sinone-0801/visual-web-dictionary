@@ -144,9 +144,8 @@
                     div.className = 'word-entry';
                     div.textContent = `${entry.word}（${entry.reading}）`;
                     div.onclick = () => {
-                        const hiragana = entry.reading.replace(/[\u30A1-\u30FA]/g, 
-                            ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-                        const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+                        // 単語のみを使用してURLを生成
+                        const url = `https://kotobank.jp/word/${encodeURIComponent(entry.word)}`;
                         window.open(url, '_blank');
                     };
                     wordList.appendChild(div);
@@ -196,9 +195,8 @@
                 div.className = 'word-entry';
                 div.textContent = `${entry.word}（${entry.reading}）`;
                 div.onclick = () => {
-                    const hiragana = entry.reading.replace(/[\u30A1-\u30FA]/g, 
-                        ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-                    const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+                    // 単語のみを使用してURLを生成
+                    const url = `https://kotobank.jp/word/${encodeURIComponent(entry.word)}`;
                     window.open(url, '_blank');
                 };
                 wordList.appendChild(div);
