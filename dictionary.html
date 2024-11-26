@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>日本語WordNet辞書</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dictionary-container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 95vh;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .index-area {
+            width: 40px;
+            height: 100%;
+            background: #e0e0e0;
+            position: relative;
+            border-radius: 8px 0 0 8px;
+        }
+        .tab-section {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #ffccd5;
+            cursor: pointer;
+        }
+        .dictionary-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .word-list {
+            column-count: 3;
+            column-gap: 40px;
+            line-height: 1.8;
+        }
+        .word-entry {
+            margin: 5px 0;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            break-inside: avoid-column;
+            cursor: pointer;
+            color: #2244cc;
+        }
+        .word-entry:hover {
+            background-color: #e9ecef;
+            text-decoration: underline;
+        }
+        .search-box {
+            margin: 0 auto 20px auto;
+            max-width: 300px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .page-navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .nav-button:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dictionary-container">
+        <div class="index-area">
+            <div class="tab-section" id="indexTab"></div>
+        </div>
+        <div class="dictionary-content">
+            <div class="search-box">
+                <input type="text" placeholder="検索..." id="searchInput">
+            </div>
+            <div class="word-list" id="wordList"></div>
+        </div>
+    </div>
+    
+    <div class="page-navigation">
+        <button class="nav-button" id="prevButton">前へ</button>
+        <span id="pageInfo"></span>
+        <button class="nav-button" id="nextButton">次へ</button>
+    </div>
+
+    <script>
+    let words = [];
+    let currentPage = 0;
+    const wordsPerPage = 50;
+    
+    // JSONファイルから単語データを読み込む
+    fetch('words.json')
+        .then(response => response.json())
+        .then(data => {
+            words = data;
+            const ratio = localStorage.getItem('clickRatio');
+            if (ratio) {
+                currentPage = Math.floor(ratio * (words.length / wordsPerPage));
+                localStorage.removeItem('clickRatio');
+            }
+            showCurrentPage();
+            updatePageInfo();
+        });
+
+    function showCurrentPage() {
+        const start = currentPage * wordsPerPage;
+        const end = start + wordsPerPage;
+        const pageWords = words.slice(start, end);
+        
+        const wordList = document.getElementById('wordList');
+        wordList.innerHTML = '';
+        
+        pageWords.forEach(word => {
+            const div = document.createElement('div');
+            div.className = 'word-entry';
+            div.textContent = word;
+            div.onclick = () => {
+                const hiragana = word.replace(/[\u30A1-\u30FA]/g, 
+                    ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+                const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+                window.open(url, '_blank');
+            };
+            wordList.appendChild(div);
+        });
+    }
+
+    function updatePageInfo() {
+        const totalPages = Math.ceil(words.length / wordsPerPage);
+        document.getElementById('pageInfo').textContent = 
+            `${currentPage + 1} / ${totalPages}`;
+        
+        document.getElementById('prevButton').disabled = currentPage === 0;
+        document.getElementById('nextButton').disabled = 
+            currentPage >= totalPages - 1;
+    }
+
+    document.getElementById('prevButton').onclick = () => {
+        if (currentPage > 0) {
+            currentPage--;
+            showCurrentPage();
+            updatePageInfo();
+        }
+    };
+
+    document.getElementById('nextButton').onclick = () => {
+        if (currentPage < Math.ceil(words.length / wordsPerPage) - 1) {
+            currentPage++;
+            showCurrentPage();
+            updatePageInfo();
+        }
+    };
+
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const filtered = words.filter(word => 
+            word.toLowerCase().includes(query));
+        
+        const wordList = document.getElementById('wordList');
+        wordList.innerHTML = '';
+        
+        filtered.slice(0, wordsPerPage).forEach(word => {
+            const div = document.createElement('div');
+            div.className = 'word-entry';
+            div.textContent = word;
+            div.onclick = () => {
+                const hiragana = word.replace(/[\u30A1-\u30FA]/g, 
+                    ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+                const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+                window.open(url, '_blank');
+            };
+            wordList.appendChild(div);
+        });
+    });
+
+    document.getElementById('indexTab').onclick = function(e) {
+        const rect = this.getBoundingClientRect();
+        const ratio = (e.clientY - rect.top) / rect.height;
+        currentPage = Math.floor(ratio * Math.ceil(words.length / wordsPerPage));
+        showCurrentPage();
+        updatePageInfo();
+    };
+    </script>
+</body>
+</html>
