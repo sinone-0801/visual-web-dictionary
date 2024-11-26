@@ -144,8 +144,11 @@
                     div.className = 'word-entry';
                     div.textContent = `${entry.word}（${entry.reading}）`;
                     div.onclick = () => {
-                        // 単語のみを使用してURLを生成
-                        const url = `https://kotobank.jp/word/${encodeURIComponent(entry.word)}`;
+                        // カタカナのみをひらがなに変換
+                        const searchWord = entry.word.match(/[\u30A0-\u30FF]/) ? 
+                            entry.word.replace(/[\u30A1-\u30FA]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)) :
+                            entry.word;
+                        const url = `https://kotobank.jp/word/${encodeURIComponent(searchWord)}`;
                         window.open(url, '_blank');
                     };
                     wordList.appendChild(div);
@@ -195,8 +198,11 @@
                 div.className = 'word-entry';
                 div.textContent = `${entry.word}（${entry.reading}）`;
                 div.onclick = () => {
-                    // 単語のみを使用してURLを生成
-                    const url = `https://kotobank.jp/word/${encodeURIComponent(entry.word)}`;
+                    // カタカナのみをひらがなに変換
+                    const searchWord = entry.word.match(/[\u30A0-\u30FF]/) ? 
+                        entry.word.replace(/[\u30A1-\u30FA]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)) :
+                        entry.word;
+                    const url = `https://kotobank.jp/word/${encodeURIComponent(searchWord)}`;
                     window.open(url, '_blank');
                 };
                 wordList.appendChild(div);
