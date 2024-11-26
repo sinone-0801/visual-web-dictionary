@@ -16,6 +16,19 @@
             gap: 8px;
         }
 
+        .nav-button:disabled {
+            background: #eee;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            display: inline-block;
+            padding: 8px 16px;
+            min-width: 100px;
+            text-align: center;
+        }
+        
         .word-text {
             font-weight: bold;
         }
@@ -126,6 +139,47 @@
     </div>
 
     <script>
+// ページネーション機能を追加
+function updatePageInfo() {
+    const totalPages = Math.ceil(words.length / wordsPerPage);
+    document.getElementById('pageInfo').textContent = 
+        `${currentPage + 1} / ${totalPages}`;
+    
+    // ボタンの有効/無効を設定
+    document.getElementById('prevButton').disabled = currentPage === 0;
+    document.getElementById('nextButton').disabled = 
+        currentPage >= totalPages - 1;
+}
+
+// インデックスタブのクリックイベント
+document.getElementById('indexTab').onclick = function(e) {
+    const rect = this.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const heightRatio = y / rect.height;
+    currentPage = Math.floor(heightRatio * Math.ceil(words.length / wordsPerPage));
+    showCurrentPage();
+    updatePageInfo();
+};
+
+// 前へボタンのクリックイベント
+document.getElementById('prevButton').onclick = function() {
+    if (currentPage > 0) {
+        currentPage--;
+        showCurrentPage();
+        updatePageInfo();
+    }
+};
+
+// 次へボタンのクリックイベント
+document.getElementById('nextButton').onclick = function() {
+    const totalPages = Math.ceil(words.length / wordsPerPage);
+    if (currentPage < totalPages - 1) {
+        currentPage++;
+        showCurrentPage();
+        updatePageInfo();
+    }
+};
+
 // dictionary.htmlのscript部分を更新
 let words = [];
 let currentPage = 0;
