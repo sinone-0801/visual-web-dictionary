@@ -143,18 +143,38 @@
                     const div = document.createElement('div');
                     div.className = 'word-entry';
                     div.textContent = `${entry.word}（${entry.reading}）`;
-                    div.onclick = () => {
-                        // カタカナのみをひらがなに変換
+                    div.onclick = async () => {
                         const searchWord = entry.word.match(/[\u30A0-\u30FF]/) ? 
                             entry.word.replace(/[\u30A1-\u30FA]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)) :
                             entry.word;
                         const url = `https://kotobank.jp/word/${encodeURIComponent(searchWord)}`;
-                        window.open(url, '_blank');
+
+                        // リンクをチェック
+                        try {
+                            const response = await fetch(url);
+                            if (response.status === 404) {
+                                // 404の場合、単語を削除
+                                words = words.filter(w => w !== entry);
+                                // JSONファイルを更新
+                                const blob = new Blob([JSON.stringify(words, null, 2)], {type: 'application/json'});
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = 'words.json';
+                                link.click();
+                                // ページを再表示
+                                showCurrentPage();
+                                updatePageInfo();
+                            } else {
+                                window.open(url, '_blank');
+                            }
+                        } catch (error) {
+                            console.error('Error checking URL:', error);
+                            window.open(url, '_blank');
+                        }
                     };
                     wordList.appendChild(div);
                 });
             }
-
 
         function updatePageInfo() {
             const totalPages = Math.ceil(words.length / wordsPerPage);
@@ -197,13 +217,30 @@
                 const div = document.createElement('div');
                 div.className = 'word-entry';
                 div.textContent = `${entry.word}（${entry.reading}）`;
-                div.onclick = () => {
-                    // カタカナのみをひらがなに変換
+                div.onclick = async () => {
                     const searchWord = entry.word.match(/[\u30A0-\u30FF]/) ? 
                         entry.word.replace(/[\u30A1-\u30FA]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)) :
                         entry.word;
                     const url = `https://kotobank.jp/word/${encodeURIComponent(searchWord)}`;
-                    window.open(url, '_blank');
+
+                    try {
+                        const response = await fetch(url);
+                        if (response.status === 404) {
+                            words = words.filter(w => w !== entry);
+                            const blob = new Blob([JSON.stringify(words, null, 2)], {type: 'application/json'});
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = 'words.json';
+                            link.click();
+                            showCurrentPage();
+                            updatePageInfo();
+                        } else {
+                            window.open(url, '_blank');
+                        }
+                    } catch (error) {
+                        console.error('Error checking URL:', error);
+                        window.open(url, '_blank');
+                    }
                 };
                 wordList.appendChild(div);
             });
