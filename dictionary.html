@@ -10,6 +10,20 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+        .word-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .word-text {
+            font-weight: bold;
+        }
+
+        .word-reading {
+            color: #666;
+            font-size: 0.9em;
+        }
         .dictionary-container {
             display: flex;
             width: 90%;
@@ -112,102 +126,94 @@
     </div>
 
     <script>
-    let words = [];
-    let currentPage = 0;
-    const wordsPerPage = 50;
-    
-    // JSONファイルから単語データを読み込む
-    fetch('words.json')
-        .then(response => response.json())
-        .then(data => {
-            words = data;
-            const ratio = localStorage.getItem('clickRatio');
-            if (ratio) {
-                currentPage = Math.floor(ratio * (words.length / wordsPerPage));
-                localStorage.removeItem('clickRatio');
-            }
-            showCurrentPage();
-            updatePageInfo();
-        });
+// dictionary.htmlのscript部分を更新
+let words = [];
+let currentPage = 0;
+const wordsPerPage = 50;
 
-    function showCurrentPage() {
-        const start = currentPage * wordsPerPage;
-        const end = start + wordsPerPage;
-        const pageWords = words.slice(start, end);
-        
-        const wordList = document.getElementById('wordList');
-        wordList.innerHTML = '';
-        
-        pageWords.forEach(word => {
-            const div = document.createElement('div');
-            div.className = 'word-entry';
-            div.textContent = word;
-            div.onclick = () => {
-                const hiragana = word.replace(/[\u30A1-\u30FA]/g, 
-                    ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-                const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
-                window.open(url, '_blank');
-            };
-            wordList.appendChild(div);
-        });
-    }
-
-    function updatePageInfo() {
-        const totalPages = Math.ceil(words.length / wordsPerPage);
-        document.getElementById('pageInfo').textContent = 
-            `${currentPage + 1} / ${totalPages}`;
-        
-        document.getElementById('prevButton').disabled = currentPage === 0;
-        document.getElementById('nextButton').disabled = 
-            currentPage >= totalPages - 1;
-    }
-
-    document.getElementById('prevButton').onclick = () => {
-        if (currentPage > 0) {
-            currentPage--;
-            showCurrentPage();
-            updatePageInfo();
+// JSONファイルから単語データを読み込む
+fetch('words.json')
+    .then(response => response.json())
+    .then(data => {
+        words = data;
+        const ratio = localStorage.getItem('clickRatio');
+        if (ratio) {
+            currentPage = Math.floor(ratio * (words.length / wordsPerPage));
+            localStorage.removeItem('clickRatio');
         }
-    };
-
-    document.getElementById('nextButton').onclick = () => {
-        if (currentPage < Math.ceil(words.length / wordsPerPage) - 1) {
-            currentPage++;
-            showCurrentPage();
-            updatePageInfo();
-        }
-    };
-
-    const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        const filtered = words.filter(word => 
-            word.toLowerCase().includes(query));
-        
-        const wordList = document.getElementById('wordList');
-        wordList.innerHTML = '';
-        
-        filtered.slice(0, wordsPerPage).forEach(word => {
-            const div = document.createElement('div');
-            div.className = 'word-entry';
-            div.textContent = word;
-            div.onclick = () => {
-                const hiragana = word.replace(/[\u30A1-\u30FA]/g, 
-                    ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-                const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
-                window.open(url, '_blank');
-            };
-            wordList.appendChild(div);
-        });
-    });
-
-    document.getElementById('indexTab').onclick = function(e) {
-        const rect = this.getBoundingClientRect();
-        const ratio = (e.clientY - rect.top) / rect.height;
-        currentPage = Math.floor(ratio * Math.ceil(words.length / wordsPerPage));
         showCurrentPage();
         updatePageInfo();
-    };
+    });
+
+function showCurrentPage() {
+    const start = currentPage * wordsPerPage;
+    const end = start + wordsPerPage;
+    const pageWords = words.slice(start, end);
+    
+    const wordList = document.getElementById('wordList');
+    wordList.innerHTML = '';
+    
+    pageWords.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'word-entry';
+        
+        // 単語と読みを表示
+        const wordSpan = document.createElement('span');
+        wordSpan.textContent = entry.word;
+        wordSpan.className = 'word-text';
+        
+        const readingSpan = document.createElement('span');
+        readingSpan.textContent = `（${entry.reading}）`;
+        readingSpan.className = 'word-reading';
+        
+        div.appendChild(wordSpan);
+        div.appendChild(readingSpan);
+        
+        div.onclick = () => {
+            const hiragana = entry.reading.replace(/[\u30A1-\u30FA]/g, 
+                ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+            const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+            window.open(url, '_blank');
+        };
+        wordList.appendChild(div);
+    });
+}
+
+// 検索機能も更新
+searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    const filtered = words.filter(entry => 
+        entry.word.toLowerCase().includes(query) || 
+        entry.reading.toLowerCase().includes(query)
+    );
+    
+    const wordList = document.getElementById('wordList');
+    wordList.innerHTML = '';
+    
+    filtered.slice(0, wordsPerPage).forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'word-entry';
+        
+        const wordSpan = document.createElement('span');
+        wordSpan.textContent = entry.word;
+        wordSpan.className = 'word-text';
+        
+        const readingSpan = document.createElement('span');
+        readingSpan.textContent = `（${entry.reading}）`;
+        readingSpan.className = 'word-reading';
+        
+        div.appendChild(wordSpan);
+        div.appendChild(readingSpan);
+        
+        div.onclick = () => {
+            const hiragana = entry.reading.replace(/[\u30A1-\u30FA]/g, 
+                ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+            const url = `https://kotobank.jp/word/${encodeURIComponent(hiragana)}`;
+            window.open(url, '_blank');
+        };
+        wordList.appendChild(div);
+    });
+});
     </script>
 </body>
 </html>
