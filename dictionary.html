@@ -114,7 +114,7 @@
     <script>
         let words = [];
         let currentPage = 0;
-        const wordsPerPage = 50;
+        const wordsPerPage = 45;
         
         // JSONファイルから単語データを読み込む
         fetch('words.json')
@@ -130,7 +130,7 @@
                 showCurrentPage();
                 updatePageInfo();
             });
-            
+
             function showCurrentPage() {
                 const start = currentPage * wordsPerPage;
                 const end = start + wordsPerPage;
